@@ -5,7 +5,7 @@ Handles IndexedDb caching
 ## Install
 
 ```bash
-$ npm i --save @unicef-polymer/etools-ajax
+$ npm i --save @unicef-polymer/etools-dexie-caching
 ```
 
 ## Demo
