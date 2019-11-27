@@ -1,5 +1,5 @@
 {
-  "name": "etools-dexie-caching",
+  "name": "@unicef-polymer/etools-dexie-caching",
   "description": "Handles IndexedDb caching",
   "version": "1.0.0-rc.1",
   "main": "etools-dexie-caching.js",

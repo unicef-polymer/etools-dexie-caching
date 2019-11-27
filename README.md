@@ -2,14 +2,16 @@
 
 Handles IndexedDb caching
 
-## Install the Polymer-CLI
+## Install
 
-First, make sure you have the [Polymer CLI](https://www.npmjs.com/package/polymer-cli) and npm (packaged with [Node.js](https://nodejs.org)) installed. Run `npm install` to install your element's dependencies, then run `polymer serve` to serve your element locally.
+```bash
+$ npm i --save @unicef-polymer/etools-ajax
+```
 
 ## Demo
 
 ```
-See etools-ajax component (https://github.com/unicef-polymer/etools-ajax) for an example of usage.
+See etools-ajax component (https://github.com/unicef-polymer/etools-ajax) for an usage example.
 ```
 
 
