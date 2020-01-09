@@ -1,7 +1,7 @@
 # \<etools-dexie-caching\>
 
 * Handles caching in IndexedDb.
-* To use you have to define the your Dexie db(s) and endpoints in your app.
+* To use you have to define your Dexie db(s) and endpoints in your app.
 * Ability to cache in your app's specific db: `window.EtoolsRequestCacheDb`
 * Ability to cache in a db that it's shared between etools apps and holds the data that is common to all these apps: `window.EtoolsSharedDb`.
 
