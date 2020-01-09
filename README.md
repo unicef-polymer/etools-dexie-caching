@@ -27,7 +27,7 @@ Example of defining the `window.EtoolsSharedDb`:
     collections: "&cacheKey, data, expire"
   });
   
-  window.EtoolsSharedDb = appDexieDb;
+  window.EtoolsSharedDb = sharedDexieDb;
 ```
 
 
@@ -37,17 +37,17 @@ const endpoints = {
   {
     url: 'your/api/route',
     exp: 300000, // if exp = 0 no caching will be made
-    cachingKey: 'dataSetIdentifierString'
+    cachingKey: 'stringIdentifier'
   },
    {
     url: 'your/api/route',
     exp: 300000, // milliseconds expected
-    sharedDbCachingKey: 'dataSetIdentifierString'
+    sharedDbCachingKey: 'stringIdentifier'
   },
    {
     url: 'your/api/route',
     exp: 300000, // if exp is missing no caching will be made
-    cacheTableName: 'dataSetIdentifierString'
+    cacheTableName: 'stringIdentifier'
   }
 };
 ```
@@ -67,12 +67,12 @@ The cached data will have the following format:
 }
 ```
 Set the `cacheTableName` property if you do not want to cache in the `ajaxDefaultDataTable` table, but in a separate table with the provided name.
-This is recommended if you need to do queries on this table later, ike showing a list with pagination and filtering only on frontend side.
+This is recommended if you need to do queries on this table later, like showing a list with pagination and filtering only on frontend side.
 
 Set the  `sharedDbCachingKey` if you want to cache the data in the EtoolsSharedDb, in the default table called `collections` and 'sharedDbCachingKey' will be the row identifier used to retrieve the data.
 
 
-Info about Dexie.js databases check the [documentation](http://dexie.org/).
+For info about Dexie.js databases check the [documentation](http://dexie.org/).
 
 ### Disable caching
 
