@@ -27,11 +27,11 @@ Example of defining the `window.EtoolsSharedDb`:
     collections: "&cacheKey, data, expire"
   });
   
-  window.EtoolsRequestCacheDb = appDexieDb;
+  window.EtoolsSharedDb = appDexieDb;
 ```
 
 
-In your ap you will configure your cacheable endpoints:
+In your app you will configure your cacheable endpoints:
 ```javascript
 const endpoints = {
   {
@@ -46,14 +46,16 @@ const endpoints = {
   },
    {
     url: 'your/api/route',
-    exp: 300000, // if exp = 0 no caching will be made
+    exp: 300000, // if exp is missing no caching will be made
     cacheTableName: 'dataSetIdentifierString'
   }
 };
 ```
 
-To mark a request as cacheable you have to set the `exp` property.
-Set the `cachingKey` property if you want to cache the endpoint response in the default table `ajaxDefaultDataTable` and 'cachingKey' will be the row identifier used to retrieve the data.
+To mark a request as cacheable you have to set the `exp` property and one of `cachingKey`, `cacheTableName` or `sharedDbCachingKey`.  
+ 
+ Set the `cachingKey` property if you want to cache the endpoint response in the default table `ajaxDefaultDataTable` and 'cachingKey' will be the row identifier used to retrieve the data.  
+The cached data will have the following format:
 ```javascript
 {
   // cacheKey can have request params stringified in the end if params were provided in sendRequest options
@@ -66,7 +68,8 @@ Set the `cachingKey` property if you want to cache the endpoint response in the 
 ```
 Set the `cacheTableName` property if you do not want to cache in the `ajaxDefaultDataTable` table, but in a separate table with the provided name.
 This is recommended if you need to do queries on this table later, ike showing a list with pagination and filtering only on frontend side.
-Set the  `sharedDbCachingKey` if you want to cache the data in the EtoolsSharedDb in the default table called `collections` and 'sharedDbCachingKey' will be the row identifier used to retrieve the data.
+
+Set the  `sharedDbCachingKey` if you want to cache the data in the EtoolsSharedDb, in the default table called `collections` and 'sharedDbCachingKey' will be the row identifier used to retrieve the data.
 
 
 Info about Dexie.js databases check the [documentation](http://dexie.org/).
