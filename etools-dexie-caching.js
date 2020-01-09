@@ -3,8 +3,8 @@ import Dexie from 'dexie';
 import {logWarn} from '@unicef-polymer/etools-behaviors/etools-logging';
 
 
-let etoolsAjaxCacheDefaultTableName = 'ajaxDefaultDataTable';
-let etoolsAjaxCacheListsExpireMapTable = 'listsExpireMapTable';
+const etoolsAjaxCacheDefaultTableName = 'ajaxDefaultDataTable';
+const etoolsAjaxCacheListsExpireMapTable = 'listsExpireMapTable';
 
 /**
  * Get caching info for the current request
@@ -26,7 +26,8 @@ function getCachingInfo(endpoint) {
  *  url: string,
  *  exp?: number,
  *  cacheTableName?: string,
- *  cachingKey?: string
+ *  sharedDbCachingKey?: string,
+ *  cachingKey?: string, 
  * } endpoint
  */
 export function requestIsCacheable(method, endpoint) {
