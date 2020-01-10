@@ -1,7 +1,7 @@
 {
   "name": "@unicef-polymer/etools-dexie-caching",
   "description": "Handles IndexedDb caching",
-  "version": "1.0.0-rc.4",
+  "version": "1.0.0-rc.5",
   "main": "etools-dexie-caching.js",
   "license": "BSD-3-Clause",
   "repository": {

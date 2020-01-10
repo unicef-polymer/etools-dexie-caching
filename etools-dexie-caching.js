@@ -8,10 +8,10 @@ const sharedDbTableName = 'collections';
 
 const CacheLocations = {
   EtoolsRequestCacheDb: {
-    [etoolsAjaxCacheDefaultTableName]: etoolsAjaxCacheDefaultTableName,
+    defaultDataTable: etoolsAjaxCacheDefaultTableName,
     specifiedTable: 'specifiedTable'
   },
-  EtoolsSharedDb
+  EtoolsSharedDb: 'EtoolsSharedDb'
 }
 
 /**
@@ -72,7 +72,7 @@ function _getEndpointCacheKey(endpoint) {
   if (_isNonEmptyString(endpoint.cachingKey)) {
     cacheKey = endpoint.cachingKey;
   }
-  if (_isNonEmptyObject(this.params)) {
+  if (_isNonEmptyObject(endpoint.params)) {
     cacheKey += '_' + JSON.stringify(params);
   }
   return cacheKey;
@@ -107,9 +107,9 @@ function dexieDbIsConfigured(endpoint) {
  */
 function _getCacheLocation(cachingInfo) {
   if (cachingInfo.cacheTableName === etoolsAjaxCacheDefaultTableName) {
-    return CacheLocations.EtoolsRequestCacheDb.etoolsAjaxCacheDefaultTableName;
+    return CacheLocations.EtoolsRequestCacheDb.defaultDataTable;
   } else {
-    if (!!sharedDbCachingKey) {
+    if (!!cachingInfo.sharedDbCachingKey) {
       return CacheLocations.EtoolsSharedDb;
     }
     return CacheLocations.EtoolsRequestCacheDb.specifiedTable;
@@ -194,7 +194,7 @@ export function cacheEndpointResponse(responseData, endpoint) {
   let cachingInfo = getCachingInfo(endpoint);
 
   switch (_getCacheLocation(cachingInfo)) {
-    case CacheLocations.EtoolsRequestCacheDb.etoolsAjaxCacheDefaultTableName: {
+    case CacheLocations.EtoolsRequestCacheDb.defaultDataTable: {
       let dataToCache = {
         cacheKey: cachingInfo.cacheKey,
         data: responseData,
@@ -300,7 +300,7 @@ export function getFromCache(endpoint) {
   let cachingInfo = getCachingInfo(endpoint);
 
   switch (_getCacheLocation(cachingInfo)) {
-    case CacheLocations.EtoolsRequestCacheDb.ajaxDefaultDataTable: {
+    case CacheLocations.EtoolsRequestCacheDb.defaultDataTable: {
       return _getDataFromDefaultCacheTable(cachingInfo.cacheKey);
     }
     case CacheLocations.EtoolsRequestCacheDb.specifiedTable: {
