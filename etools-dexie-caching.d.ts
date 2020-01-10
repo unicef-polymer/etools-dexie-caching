@@ -3,7 +3,8 @@ type EtoolsEndpoint = {
   url: string,
   exp?: number,
   cacheTableName?: string,
-  cachingKey?: string
+  cachingKey?: string,
+  sharedDbCachingKey?: string
 }
 
 declare function requestIsCacheable(method: string, endpoint: EtoolsEndpoint): boolean;
