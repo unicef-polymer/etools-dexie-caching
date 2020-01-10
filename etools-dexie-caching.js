@@ -1,7 +1,6 @@
 /* eslint-disable linebreak-style */
 import Dexie from 'dexie';
 import {logWarn, logError} from '@unicef-polymer/etools-behaviors/etools-logging';
-import './shared-db-config';
 
 const etoolsAjaxCacheDefaultTableName = 'ajaxDefaultDataTable';
 const etoolsAjaxCacheListsExpireMapTable = 'listsExpireMapTable';
