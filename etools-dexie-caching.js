@@ -9,7 +9,7 @@ const sharedDbTableName = 'collections';
 const CacheLocations = {
   EtoolsRequestCacheDb: {
     [etoolsAjaxCacheDefaultTableName]: etoolsAjaxCacheDefaultTableName,
-    specifiedTable
+    specifiedTable: 'specifiedTable'
   },
   EtoolsSharedDb
 }
