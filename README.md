@@ -93,10 +93,23 @@ Just set this in your app: `window.EtoolsRequestCacheDisabled = true`
 $ npm i --save @unicef-polymer/etools-dexie-caching
 ```
 
+## Usage example
+```javascript
+if (requestIsCacheable(method, endpoint)) {
+    return getFromCache(endpoint)
+      .catch(() => {
+        return `do http request...`
+          .then(response => cacheEndpointResponse(response, endpoint));
+      });
+  }
+
+  return `do http request...`;
+```
+
 ## Demo
 
 ```
-See etools-ajax component (https://github.com/unicef-polymer/etools-ajax) for an usage example.
+See etools-ajax component (https://github.com/unicef-polymer/etools-ajax) for an example.
 ```
 
 
