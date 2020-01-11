@@ -97,13 +97,13 @@ $ npm i --save @unicef-polymer/etools-dexie-caching
 ```javascript
 if (requestIsCacheable(method, endpoint)) {
     return getFromCache(endpoint)
-      .catch(() => {
+      .catch(() => { // Data not found in cache or is expired
         return `do http request...`
           .then(response => cacheEndpointResponse(response, endpoint));
       });
   }
 
-  return `do http request...`;
+  return `do http request...`; // When request is not cacheable, just do the http request
 ```
 
 ## Demo
