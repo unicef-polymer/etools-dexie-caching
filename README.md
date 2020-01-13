@@ -52,7 +52,7 @@ const endpoints = {
 };
 ```
 
-To mark a request as cacheable you have to set the `exp` property and one of `cachingKey`, `cacheTableName` or `sharedDbCachingKey`.
+To mark an endpoint as cacheable you have to set the `exp` property and one of `cachingKey`, `cacheTableName` or `sharedDbCachingKey`.
 
  Set the `cachingKey` property if you want to cache the endpoint response in the default table `ajaxDefaultDataTable` and 'cachingKey' will be the row identifier used to retrieve the data.
 The cached data will have the following format:
