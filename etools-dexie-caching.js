@@ -1,10 +1,18 @@
 /* eslint-disable linebreak-style */
 import Dexie from 'dexie';
-import {logWarn} from '@unicef-polymer/etools-behaviors/etools-logging';
+import {logWarn, logError} from '@unicef-polymer/etools-behaviors/etools-logging';
 
+const etoolsAjaxCacheDefaultTableName = 'ajaxDefaultDataTable';
+const etoolsAjaxCacheListsExpireMapTable = 'listsExpireMapTable';
+const sharedDbTableName = 'collections';
 
-let etoolsAjaxCacheDefaultTableName = 'ajaxDefaultDataTable';
-let etoolsAjaxCacheListsExpireMapTable = 'listsExpireMapTable';
+const CacheLocations = {
+  EtoolsRequestCacheDb: {
+    defaultDataTable: etoolsAjaxCacheDefaultTableName,
+    specifiedTable: 'specifiedTable'
+  },
+  EtoolsSharedDb: 'EtoolsSharedDb'
+}
 
 /**
  * Get caching info for the current request
@@ -14,9 +22,26 @@ function getCachingInfo(endpoint) {
     url: endpoint.url,
     exp: parseInt(endpoint.exp, 10), // ensure this value is integer
     cacheKey: _getEndpointCacheKey(endpoint),
-    cacheTableName: endpoint.cacheTableName || etoolsAjaxCacheDefaultTableName
+    cacheTableName: _getCacheTableName(endpoint),
+    sharedDbCachingKey: endpoint.sharedDbCachingKey
   };
 
+}
+
+function _getCacheTableName(endpoint) {
+  if (!!endpoint.cacheTableName) {
+    return endpoint.cacheTableName;
+  }
+
+  if (!!endpoint.cachingKey) {
+    return etoolsAjaxCacheDefaultTableName;
+  }
+
+  if (!!endpoint.sharedDbCachingKey) {
+    return sharedDbTableName;
+  }
+
+  return '';
 }
 
 /**
@@ -26,7 +51,8 @@ function getCachingInfo(endpoint) {
  *  url: string,
  *  exp?: number,
  *  cacheTableName?: string,
- *  cachingKey?: string
+ *  sharedDbCachingKey?: string,
+ *  cachingKey?: string,
  * } endpoint
  */
 export function requestIsCacheable(method, endpoint) {
@@ -46,9 +72,9 @@ function _getEndpointCacheKey(endpoint) {
   if (_isNonEmptyString(endpoint.cachingKey)) {
     cacheKey = endpoint.cachingKey;
   }
-  // if (this._isNonEmptyObject(this.params)) {
-  //   cacheKey += '_' + JSON.stringify(params);
-  // }
+  if (_isNonEmptyObject(endpoint.params)) {
+    cacheKey += '_' + JSON.stringify(params);
+  }
   return cacheKey;
 }
 
@@ -66,14 +92,39 @@ function _isNonEmptyObject(obj) {
  * cacheTableName and listsExpireMapTable tables should be defined
  */
 function dexieDbIsConfigured(endpoint) {
+  if (endpoint.sharedDbCachingKey && window.EtoolsSharedDb) {
+    return true;
+  }
   let cacheTableName = endpoint.cacheTableName || etoolsAjaxCacheDefaultTableName;
   return window.EtoolsRequestCacheDb instanceof Dexie && // eslint-disable-line
     window.EtoolsRequestCacheDb[etoolsAjaxCacheListsExpireMapTable] &&
     window.EtoolsRequestCacheDb[cacheTableName];
 }
 
-function _shouldCacheToDefaultTable(cacheTableName) {
-  return cacheTableName === etoolsAjaxCacheDefaultTableName;
+/**
+ *
+ * @returns `ajaxDefaultDataTable` or `EtoolsSharedDb` or `specifiedTable`
+ */
+function _getCacheLocation(cachingInfo) {
+  if (cachingInfo.cacheTableName === etoolsAjaxCacheDefaultTableName) {
+    return CacheLocations.EtoolsRequestCacheDb.defaultDataTable;
+  } else {
+    if (!!cachingInfo.sharedDbCachingKey) {
+      return CacheLocations.EtoolsSharedDb;
+    }
+    return CacheLocations.EtoolsRequestCacheDb.specifiedTable;
+  }
+
+}
+
+function _cacheEndpointDataInSharedDb(dataToCache) {
+  return window.EtoolsSharedDb[sharedDbTableName].put(dataToCache)
+    .then((result) => {
+      return dataToCache.data;
+    }).catch((error) => {
+      logWarn('Failed to add data in EtoolsSharedDb. Data not cached.', 'etools-dexie-caching', error);
+      return dataToCache.data;
+    });
 }
 
 /**
@@ -87,7 +138,7 @@ function _cacheEndpointDataUsingDefaultTable(dataToCache) {
     }).catch((error) => {
       // something happened and inserting data in dexie table failed;
       // just log the error and return the existing data(received from server)
-      logWarn('Failed to add data in etools-ajax dexie db. Data not cached.', 'etools-ajax', error);
+      logWarn('Failed to add data in etools-ajax dexie db. Data not cached.', 'etools-dexie-caching', error);
       return dataToCache.data;
     });
 }
@@ -123,7 +174,7 @@ function _cacheEndpointDataUsingSpecifiedTable(responseData, cachingInfo) {
     // transaction failed
     // just log the error and return the existing data(received from server)
     logWarn('Failed to add data in etools-ajax dexie specified table: ' +
-      cachingInfo.cacheTableName + '. Data not cached.', 'etools-ajax', error);
+      cachingInfo.cacheTableName + '. Data not cached.', 'etools-dexie-caching', error);
     return responseData;
   });
 }
@@ -135,22 +186,35 @@ function _cacheEndpointDataUsingSpecifiedTable(responseData, cachingInfo) {
  *  url: string,
  *  exp?: number,
  *  cacheTableName?: string,
- *  cachingKey?: string
+ *  cachingKey?: string,
+ *  sharedDbCachingKey?: string
  * } endpoint
  */
 export function cacheEndpointResponse(responseData, endpoint) {
   let cachingInfo = getCachingInfo(endpoint);
-  if (_shouldCacheToDefaultTable(cachingInfo.cacheTableName)) {
-    let dataToCache = {
-      cacheKey: cachingInfo.cacheKey,
-      data: responseData,
-      expire: cachingInfo.exp + Date.now()
-    };
-    // single object added into default dexie db table
-    return _cacheEndpointDataUsingDefaultTable(dataToCache);
-  } else {
-    // array of objects bulk added into a specified table
-    return _cacheEndpointDataUsingSpecifiedTable(responseData, cachingInfo);
+
+  switch (_getCacheLocation(cachingInfo)) {
+    case CacheLocations.EtoolsRequestCacheDb.defaultDataTable: {
+      let dataToCache = {
+        cacheKey: cachingInfo.cacheKey,
+        data: responseData,
+        expire: cachingInfo.exp + Date.now()
+      };
+      // single object added into default dexie db table
+      return _cacheEndpointDataUsingDefaultTable(dataToCache);
+    }
+    case CacheLocations.EtoolsRequestCacheDb.specifiedTable: {
+      // array of objects bulk added into a specified table
+      return _cacheEndpointDataUsingSpecifiedTable(responseData, cachingInfo);
+    }
+    case CacheLocations.EtoolsSharedDb: {
+      let dataToCache = {
+        cacheKey: cachingInfo.sharedDbCachingKey,
+        data: responseData,
+        expire: cachingInfo.exp + Date.now()
+      };
+      return _cacheEndpointDataInSharedDb(dataToCache, cachingInfo);
+    }
   }
 }
 
@@ -179,7 +243,25 @@ function _getDataFromDefaultCacheTable(cacheKey) {
       return Promise.reject(null);
     }).catch((error) => {
       logWarn('Failed to get data from etools-ajax dexie db default caching table.',
-        'etools-ajax', error);
+        'etools-dexie-caching', error);
+      return Promise.reject(null);
+    });
+}
+
+function _getFromSharedDb(cachingKey) {
+  return window.EtoolsSharedDb[sharedDbTableName]
+    .where('cacheKey').equals(cachingKey).toArray()
+    .then((result) => {
+      if (result.length > 0) {
+        if (!_isExpiredCachedData(result[0].expire)) {
+          return result[0].data;
+        }
+      }
+      // no data
+      return Promise.reject(null);
+    }).catch((error) => {
+      logWarn('Failed to get data from EtoolsSharedDb, table ' + sharedDbTableName + '.',
+        'etools-dexie-caching', error);
       return Promise.reject(null);
     });
 }
@@ -201,7 +283,7 @@ function _getDataFromSpecifiedCacheTable(cacheTableName) {
     }).catch((error) => {
       // table not found in list expire map, data read error, other errors
       logWarn('Failed to get data from etools-ajax dexie db specified table: ' +
-        cacheTableName + '.', 'etools-ajax', error);
+        cacheTableName + '.', 'etools-dexie-caching', error);
       return Promise.reject(null);
     });
 }
@@ -216,9 +298,21 @@ function _getDataFromSpecifiedCacheTable(cacheTableName) {
  */
 export function getFromCache(endpoint) {
   let cachingInfo = getCachingInfo(endpoint);
-  if (_shouldCacheToDefaultTable(cachingInfo.cacheTableName)) {
-    return _getDataFromDefaultCacheTable(cachingInfo.cacheKey);
-  } else {
-    return _getDataFromSpecifiedCacheTable(cachingInfo.cacheTableName);
+
+  switch (_getCacheLocation(cachingInfo)) {
+    case CacheLocations.EtoolsRequestCacheDb.defaultDataTable: {
+      return _getDataFromDefaultCacheTable(cachingInfo.cacheKey);
+    }
+    case CacheLocations.EtoolsRequestCacheDb.specifiedTable: {
+      return _getDataFromSpecifiedCacheTable(cachingInfo.cacheTableName);
+    }
+    case CacheLocations.EtoolsSharedDb: {
+      return _getFromSharedDb(cachingInfo.sharedDbCachingKey);
+    }
+    default: {
+      logError('Could not determine cache location, in order to retrieve cached data.', 'etools-dexie-caching');
+    }
+
   }
 }
+
