@@ -14,6 +14,7 @@
     "prettier/prettier": "error",
     "padded-blocks": "off",
     "brace-style": "off",
+    "prefer-promise-reject-errors": "off",
     "new-cap": [
       "error",
       {
