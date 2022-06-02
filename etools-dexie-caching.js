@@ -149,7 +149,7 @@ function _cacheEndpointDataUsingDefaultTable(dataToCache) {
 function _cacheEndpointDataUsingSpecifiedTable(responseData, cachingInfo) {
   const listsExpireMapTable = window.EtoolsRequestCacheDb[etoolsAjaxCacheListsExpireMapTable];
   const specifiedTable = window.EtoolsRequestCacheDb[cachingInfo.cacheTableName];
-  return window.EtoolsRequestCacheDb.transaction('rw', listsExpireMapTable, specifiedTable, () => {
+  return window.EtoolsRequestCacheDb.transaction('rw', listsExpireMapTable, specifiedTable, async () => {
     if (responseData instanceof Array === false) {
       throw new Error('Response data should be array or objects to be ' + 'able to cache it into specified table.');
     }
@@ -160,11 +160,10 @@ function _cacheEndpointDataUsingSpecifiedTable(responseData, cachingInfo) {
       expire: cachingInfo.exp + Date.now()
     };
     // add list expire mapping details
-    listsExpireMapTable.put(listExpireDetails);
+    await listsExpireMapTable.put(listExpireDetails);
     // save bulk data
-    specifiedTable.clear().then(() => {
-      specifiedTable.bulkAdd(responseData);
-    });
+    await specifiedTable.clear();
+    await specifiedTable.bulkAdd(responseData);
   })
     .then((result) => {
       // request response saved into specified table
