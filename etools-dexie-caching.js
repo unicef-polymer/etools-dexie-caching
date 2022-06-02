@@ -149,7 +149,7 @@ function _cacheEndpointDataUsingDefaultTable(dataToCache) {
 function _cacheEndpointDataUsingSpecifiedTable(responseData, cachingInfo) {
   const listsExpireMapTable = window.EtoolsRequestCacheDb[etoolsAjaxCacheListsExpireMapTable];
   const specifiedTable = window.EtoolsRequestCacheDb[cachingInfo.cacheTableName];
-  return window.EtoolsRequestCacheDb.transaction('rw', listsExpireMapTable, specifiedTable, () => {
+  return window.EtoolsRequestCacheDb.transaction('rw', listsExpireMapTable, specifiedTable, async () => {
     if (responseData instanceof Array === false) {
       throw new Error('Response data should be array or objects to be ' + 'able to cache it into specified table.');
     }
@@ -160,11 +160,10 @@ function _cacheEndpointDataUsingSpecifiedTable(responseData, cachingInfo) {
       expire: cachingInfo.exp + Date.now()
     };
     // add list expire mapping details
-    listsExpireMapTable.put(listExpireDetails);
+    await listsExpireMapTable.put(listExpireDetails);
     // save bulk data
-    specifiedTable.clear().then(() => {
-      specifiedTable.bulkAdd(responseData);
-    });
+    await specifiedTable.clear();
+    await specifiedTable.bulkAdd(responseData);
   })
     .then((result) => {
       // request response saved into specified table
@@ -243,10 +242,11 @@ function _getDataFromDefaultCacheTable(cacheKey) {
         // check expired data
         if (!_isExpiredCachedData(result[0].expire)) {
           return result[0].data;
+        } else {
+          return Promise.reject('Expired data.');
         }
       }
-      // no data
-      return Promise.reject(null);
+      return Promise.reject('Empty collection');
     })
     .catch((error) => {
       logWarn('Failed to get data from etools-ajax dexie db default caching table.', 'etools-dexie-caching', error);
@@ -263,10 +263,11 @@ function _getFromSharedDb(cachingKey) {
       if (result.length > 0) {
         if (!_isExpiredCachedData(result[0].expire)) {
           return result[0].data;
+        } else {
+          return Promise.reject('Expired data.');
         }
       }
-      // no data
-      return Promise.reject(null);
+      return Promise.reject('Empty collection');
     })
     .catch((error) => {
       logWarn(
@@ -291,10 +292,12 @@ function _getDataFromSpecifiedCacheTable(cacheTableName) {
         if (!_isExpiredCachedData(result[0].expire)) {
           // return table content as array
           return specifiedTable.toArray();
+        } else {
+          return Promise.reject('Expired data.');
         }
       }
-      // collection data expire details missing
-      return Promise.reject(null);
+      
+      return Promise.reject('Empty collection.');
     })
     .catch((error) => {
       // table not found in list expire map, data read error, other errors
