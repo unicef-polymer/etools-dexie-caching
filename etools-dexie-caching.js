@@ -296,7 +296,6 @@ function _getDataFromSpecifiedCacheTable(cacheTableName) {
           return Promise.reject('Expired data.');
         }
       }
-      
       return Promise.reject('Empty collection.');
     })
     .catch((error) => {
