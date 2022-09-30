@@ -92,7 +92,8 @@ function dexieDbIsConfigured(endpoint) {
     return true;
   }
   const cacheTableName = endpoint.cacheTableName || etoolsAjaxCacheDefaultTableName;
-  return (!!window.EtoolsRequestCacheDb && // eslint-disable-line
+  return (
+    !!window.EtoolsRequestCacheDb && // eslint-disable-line
     window.EtoolsRequestCacheDb[etoolsAjaxCacheListsExpireMapTable] &&
     window.EtoolsRequestCacheDb[cacheTableName]
   );
@@ -318,6 +319,9 @@ function _getDataFromSpecifiedCacheTable(cacheTableName) {
  * } endpoint
  */
 export function getFromCache(endpoint) {
+  if (endpoint.bypassCache) {
+    return Promise.reject('Bypass cache requested');
+  }
   const cachingInfo = getCachingInfo(endpoint);
 
   switch (_getCacheLocation(cachingInfo)) {
